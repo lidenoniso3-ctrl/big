@@ -20,7 +20,8 @@
   </header>
 
   <main class="container">
-    <!-- بطاقة كشط البيانات -->
+    
+    <!-- 1. بطاقة كشط البيانات (Scrape) -->
     <div class="card">
       <div class="section-title">
         <h2>كشط بيانات السيو (Scrape)</h2>
@@ -31,7 +32,6 @@
       </div>
       <p id="scrapeMsg" class="msg"></p>
       
-      <!-- حاوية النتائج -->
       <div id="scrapeResults" style="display: none; margin-top: 20px;">
         <div class="kv">
           <div class="k">العنوان (Title)</div>
@@ -52,7 +52,7 @@
       </div>
     </div>
 
-    <!-- بطاقة الفحص التقني -->
+    <!-- 2. بطاقة الفحص التقني (Audit) -->
     <div class="card">
       <div class="section-title">
         <h2>الفحص التقني (Audit)</h2>
@@ -63,11 +63,27 @@
       </div>
       <p id="auditMsg" class="msg"></p>
       
-      <!-- حاوية نتائج الفحص -->
       <div id="auditResults" style="display: none; margin-top: 20px;">
         <!-- سيتم حقن النتائج هنا عبر الجافاسكريبت -->
       </div>
     </div>
+
+    <!-- 3. بطاقة التحليل المتقدم (Advanced Analysis) -->
+    <div class="card">
+      <div class="section-title">
+        <h2>التحليل المتقدم (Advanced Analysis)</h2>
+      </div>
+      <div class="row">
+        <input id="analyzeUrlInput" type="url" placeholder="https://example.com" dir="ltr">
+        <button id="analyzeBtn" class="primary">تحليل عميق</button>
+      </div>
+      <p id="analyzeMsg" class="msg"></p>
+      
+      <div id="analyzeResults" style="display: none; margin-top: 20px;">
+        <!-- سيتم حقن النتائج هنا عبر الجافاسكريبت -->
+      </div>
+    </div>
+
   </main>
 
   <script src="js/main.js"></script>

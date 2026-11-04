@@ -118,3 +118,79 @@ document.getElementById("auditBtn").addEventListener("click", async () => {
     msg.textContent = err.message;
   }
 });
+/* =========================================
+   كود التحليل المتقدم (Advanced Analyze)
+   ========================================= */
+document.getElementById("analyzeBtn").addEventListener("click", async () => {
+  const url = document.getElementById("analyzeUrlInput").value.trim();
+  const msg = document.getElementById("analyzeMsg");
+  const results = document.getElementById("analyzeResults");
+  
+  if (!url) { msg.className = "msg error"; msg.textContent = "أدخل رابطاً."; return; }
+
+  msg.className = "msg info";
+  msg.innerHTML = '<span class="spinner"></span> جارٍ التحليل العميق...';
+  results.style.display = "none";
+
+  try {
+    const res = await licensedFetch("analyze?url=" + encodeURIComponent(url));
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "فشل التحليل.");
+    
+    msg.textContent = "";
+    results.style.display = "block";
+    
+    let html = `<div class="kv">
+      <div class="k">عدد الكلمات في الصفحة</div>
+      <div class="v">${data.word_count} كلمة</div>
+      
+      <div class="k">البيانات المنظمة (Schema)</div>
+      <div class="v">${data.schema_count > 0 ? '<span class="badge ok">مدعومة (' + data.schema_count + ')</span>' : '<span class="badge err">مفقودة</span>'}</div>
+      
+      <div class="k">ملف Robots.txt</div>
+      <div class="v">${data.files.robots_txt === 200 ? '<span class="badge ok">موجود (200)</span>' : '<span class="badge err">مفقود (' + data.files.robots_txt + ')</span>'}</div>
+      
+      <div class="k">ملف Sitemap.xml</div>
+      <div class="v">${data.files.sitemap_xml === 200 ? '<span class="badge ok">موجود (200)</span>' : '<span class="badge warn">مفقود (' + data.files.sitemap_xml + ')</span>'}</div>
+      
+      <div class="k">الصور بدون Alt</div>
+      <div class="v">${data.images.without_alt > 0 ? '<span class="badge warn">' + data.images.without_alt + ' صورة</span>' : '<span class="badge ok">0</span>'}</div>
+    </div>`;
+
+    // جدول كثافة الكلمات
+    html += `<h3 style="margin-top: 25px;">أهم الكلمات المفتاحية (Keyword Density):</h3>`;
+    html += `<table style="width:100%; text-align:right; border-collapse: collapse; margin-top: 10px;">
+      <tr style="border-bottom: 1px solid var(--border); color: var(--text-dim);">
+        <th style="padding: 8px;">الكلمة</th>
+        <th style="padding: 8px;">التكرار</th>
+        <th style="padding: 8px;">الكثافة</th>
+      </tr>`;
+    data.top_keywords.forEach(k => {
+      html += `<tr style="border-bottom: 1px solid #1e293b;">
+        <td style="padding: 8px;">${k.word}</td>
+        <td style="padding: 8px;">${k.count}</td>
+        <td style="padding: 8px;">${k.density}%</td>
+      </tr>`;
+    });
+    html += `</table>`;
+
+    // وسوم التواصل الاجتماعي
+    html += `<h3 style="margin-top: 25px;">جاهزية التواصل الاجتماعي (Social):</h3>`;
+    if (Object.keys(data.social.og).length > 0) {
+      html += `<p style="color: var(--ok);">✅ وسوم Open Graph موجودة (جاهز لفيسبوك).</p>`;
+    } else {
+      html += `<p style="color: var(--warn);">⚠️ وسوم Open Graph مفقودة.</p>`;
+    }
+    if (Object.keys(data.social.twitter).length > 0) {
+      html += `<p style="color: var(--ok);">✅ وسوم Twitter Cards موجودة.</p>`;
+    } else {
+      html += `<p style="color: var(--warn);">⚠️ وسوم Twitter Cards مفقودة.</p>`;
+    }
+
+    results.innerHTML = html;
+    
+  } catch (err) {
+    msg.className = "msg error";
+    msg.textContent = err.message;
+  }
+});
