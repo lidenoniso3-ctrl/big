@@ -2,18 +2,26 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8">
-  <title>تفعيل الترخيص</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تفعيل الترخيص - SEO Platform</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <main class="auth-box">
-    <h1>أدخل مفتاح الترخيص</h1>
-    <form id="licenseForm">
-      <input id="licenseKey" type="text" placeholder="XXXXXXXX-XXXXXXXX-..." required>
-      <button type="submit">تفعيل</button>
-    </form>
-    <p id="msg" class="msg"></p>
-  </main>
+  <!-- هذا هو الغلاف الذي كان ناقصاً -->
+  <div class="auth-wrap">
+    <main class="auth-box">
+      <h1>أدخل مفتاح الترخيص</h1>
+      <p class="sub">يرجى إدخال المفتاح الذي حصلت عليه بعد الشراء لتفعيل حسابك.</p>
+      
+      <form id="licenseForm">
+        <label for="licenseKey">مفتاح الترخيص</label>
+        <input id="licenseKey" type="text" placeholder="XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX" required>
+        <button type="submit" class="primary">تفعيل</button>
+      </form>
+      
+      <p id="msg" class="msg"></p>
+    </main>
+  </div>
 
   <script src="js/auth.js"></script>
   <script>
@@ -21,11 +29,17 @@
       e.preventDefault();
       const key = document.getElementById("licenseKey").value.trim();
       const msg = document.getElementById("msg");
-      msg.textContent = "جارٍ التحقق...";
+      
+      msg.className = "msg info";
+      msg.innerHTML = '<span class="spinner"></span> جارٍ التحقق...';
+      
       try {
         await verifyLicense(key);
-        window.location.href = "dashboard.html";
+        msg.className = "msg ok";
+        msg.textContent = "تم التفعيل بنجاح! جارٍ التحويل...";
+        setTimeout(() => window.location.href = "dashboard.html", 800);
       } catch (err) {
+        msg.className = "msg error";
         msg.textContent = err.message;
       }
     });
