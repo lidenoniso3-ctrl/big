@@ -194,3 +194,47 @@ document.getElementById("analyzeBtn").addEventListener("click", async () => {
     msg.textContent = err.message;
   }
 });
+/* =========================================
+   4) البحث عن كلمات مفتاحية (Keywords Discovery)
+   ========================================= */
+document.getElementById("kwBtn").addEventListener("click", async () => {
+  const seed = document.getElementById("kwSeedInput").value.trim();
+  const lang = document.getElementById("kwLangSelect").value;
+  const msg = document.getElementById("kwMsg");
+  const results = document.getElementById("kwResults");
+
+  if (!seed) {
+    msg.className = "msg error";
+    msg.textContent = "أدخل كلمة أساسية.";
+    return;
+  }
+
+  msg.className = "msg info";
+  msg.innerHTML = '<span class="spinner"></span> جارٍ البحث في Google...';
+  results.style.display = "none";
+
+  try {
+    const res = await licensedFetch(`keywords?seed=${encodeURIComponent(seed)}&lang=${lang}`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "فشل البحث.");
+
+    msg.textContent = "";
+    results.style.display = "block";
+
+    let html = `<p style="color: var(--text-dim); margin-bottom: 15px;">
+      تم العثور على <strong style="color: var(--accent);">${data.count}</strong> كلمة بحث حقيقية مرتبطة بـ "<strong>${data.seed}</strong>".
+    </p>`;
+    html += `<p style="color: var(--warn); font-size: 0.85rem; margin-bottom: 15px;">${data.note}</p>`;
+    html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;">`;
+
+    data.suggestions.forEach(s => {
+      html += `<div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 0.9rem;">${s}</div>`;
+    });
+
+    html += `</div>`;
+    results.innerHTML = html;
+  } catch (err) {
+    msg.className = "msg error";
+    msg.textContent = err.message;
+  }
+});

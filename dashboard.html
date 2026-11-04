@@ -84,6 +84,26 @@
       </div>
     </div>
 
+    <!-- 4. بطاقة البحث عن كلمات مفتاحية حقيقية -->
+    <div class="card">
+      <div class="section-title">
+        <h2>البحث عن كلمات مفتاحية (Keywords Discovery)</h2>
+      </div>
+      <div class="row">
+        <input id="kwSeedInput" type="text" placeholder="مثال: التسويق الرقمي / SEO / قهوة" dir="auto">
+        <select id="kwLangSelect" style="padding: 12px; border-radius: 10px; background: var(--bg-soft); color: var(--text); border: 1px solid var(--border);">
+          <option value="ar">عربي</option>
+          <option value="en">English</option>
+        </select>
+        <button id="kwBtn" class="primary">اكتشاف</button>
+      </div>
+      <p id="kwMsg" class="msg"></p>
+      
+      <div id="kwResults" style="display: none; margin-top: 20px;">
+        <!-- النتائج -->
+      </div>
+    </div>
+
   </main>
 
   <script src="js/main.js"></script>
