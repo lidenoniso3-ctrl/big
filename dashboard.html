@@ -100,7 +100,24 @@
       <p id="kwMsg" class="msg"></p>
       
       <div id="kwResults" style="display: none; margin-top: 20px;">
-        <!-- النتائج -->
+        <!-- شريط الأدوات العلوي -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <p id="kwCount" style="margin: 0; color: var(--text-dim); font-size: 0.9rem;"></p>
+          <button id="kwExportBtn" class="ghost" style="font-size: 0.85rem;">📥 تحميل كـ CSV</button>
+        </div>
+
+        <!-- أزرار التصنيف (Tabs) -->
+        <div id="kwTabs" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+          <button class="tab-btn active" data-filter="all">الكل</button>
+          <button class="tab-btn" data-filter="buyers">نية شراء 🔥</button>
+          <button class="tab-btn" data-filter="learners">نية تعلم 📚</button>
+          <button class="tab-btn" data-filter="platforms">المنصات ⚙️</button>
+          <button class="tab-btn" data-filter="longtail">طويلة الذيل 🎯</button>
+        </div>
+        
+        <div id="kwListContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
+          <!-- الكلمات ستظهر هنا -->
+        </div>
       </div>
     </div>
 

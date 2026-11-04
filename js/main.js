@@ -197,6 +197,52 @@ document.getElementById("analyzeBtn").addEventListener("click", async () => {
 /* =========================================
    4) البحث عن كلمات مفتاحية (Keywords Discovery)
    ========================================= */
+let currentKeywords = [];
+let currentFilter = "all";
+
+// دالة مساعدة لتصنيف الكلمة
+function getKeywordCategory(kw) {
+  const lower = kw.toLowerCase();
+  
+  // 1. نية شراء (Buyers): تحتوي على كلمات تدل على المقارنة أو الشراء
+  if (/\b(best|top|cheap|paid|vs|comparison|review|alternative|buy|price|cost)\b/.test(lower)) return "buyers";
+  
+  // 2. نية تعلم (Learners): تحتوي على كلمات تدل على السؤال أو التعلم
+  if (/\b(what|how|why|guide|tips|list|examples|learn|tutorial|meaning|definition)\b/.test(lower)) return "learners";
+  
+  // 3. المنصات (Platforms): تحتوي على أسماء منصات معروفة
+  if (/\b(wordpress|shopify|youtube|etsy|instagram|tiktok|amazon|saas|b2b|agency|google|facebook|twitter)\b/.test(lower)) return "platforms";
+  
+  // 4. طويلة الذيل (Long-tail): أكثر من 4 كلمات
+  if (lower.split(" ").length >= 4) return "longtail";
+  
+  return "other";
+}
+
+// دالة عرض الكلمات بناءً على التصنيف
+function renderKeywords() {
+  const container = document.getElementById("kwListContainer");
+  container.innerHTML = "";
+  
+  let filtered = currentKeywords;
+  
+  if (currentFilter !== "all") {
+    filtered = currentKeywords.filter(kw => getKeywordCategory(kw) === currentFilter);
+  }
+  
+  if (filtered.length === 0) {
+    container.innerHTML = `<p style="color: var(--text-dim); grid-column: 1 / -1;">لا توجد كلمات في هذا التصنيف.</p>`;
+    return;
+  }
+
+  filtered.forEach(s => {
+    const div = document.createElement("div");
+    div.style.cssText = "background: var(--bg-soft); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 0.9rem;";
+    div.textContent = s;
+    container.appendChild(div);
+  });
+}
+
 document.getElementById("kwBtn").addEventListener("click", async () => {
   const seed = document.getElementById("kwSeedInput").value.trim();
   const lang = document.getElementById("kwLangSelect").value;
@@ -220,21 +266,45 @@ document.getElementById("kwBtn").addEventListener("click", async () => {
 
     msg.textContent = "";
     results.style.display = "block";
+    
+    currentKeywords = data.suggestions;
+    currentFilter = "all"; // إعادة تعيين الفلتر
+    
+    // تحديث الأزرار (إزالة active من الكل)
+    document.querySelectorAll("#kwTabs .tab-btn").forEach(btn => btn.classList.remove("active"));
+    document.querySelector('#kwTabs .tab-btn[data-filter="all"]').classList.add("active");
 
-    let html = `<p style="color: var(--text-dim); margin-bottom: 15px;">
-      تم العثور على <strong style="color: var(--accent);">${data.count}</strong> كلمة بحث حقيقية مرتبطة بـ "<strong>${data.seed}</strong>".
-    </p>`;
-    html += `<p style="color: var(--warn); font-size: 0.85rem; margin-bottom: 15px;">${data.note}</p>`;
-    html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;">`;
+    document.getElementById("kwCount").innerHTML = `تم العثور على <strong style="color: var(--accent);">${data.count}</strong> كلمة.`;
+    
+    renderKeywords();
 
-    data.suggestions.forEach(s => {
-      html += `<div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 0.9rem;">${s}</div>`;
-    });
-
-    html += `</div>`;
-    results.innerHTML = html;
   } catch (err) {
     msg.className = "msg error";
     msg.textContent = err.message;
   }
+});
+
+// إضافة حدث النقر على أزرار التصنيف
+document.querySelectorAll("#kwTabs .tab-btn").forEach(btn => {
+  btn.addEventListener("click", (e) => {
+    document.querySelectorAll("#kwTabs .tab-btn").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+    currentFilter = e.target.dataset.filter;
+    renderKeywords();
+  });
+});
+
+// تصدير CSV
+document.getElementById("kwExportBtn").addEventListener("click", () => {
+  if (currentKeywords.length === 0) return;
+  const csvContent = "Keyword,Category\n" + currentKeywords.map(k => `"${k.replace(/"/g, '""')}","${getKeywordCategory(k)}"`).join("\n");
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", `keywords_${Date.now()}.csv`);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 });
