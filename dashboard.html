@@ -2,21 +2,74 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8">
-  <title>لوحة التحكم</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم SEO</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="js/auth.js"></script>
   <script>if (!requireLicense()) throw new Error("redirect");</script>
 </head>
 <body>
-  <header>
-    <h1>لوحة تحكم SEO</h1>
-    <button onclick="logout()">خروج</button>
+  <!-- الشريط العلوي -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot"></span> لوحة تحكم SEO
+    </div>
+    <div>
+      <button class="ghost" onclick="logout()">تسجيل الخروج</button>
+    </div>
   </header>
-  <section>
-    <input id="urlInput" type="text" placeholder="https://example.com">
-    <button id="scrapeBtn">فحص الموقع</button>
-    <pre id="resultBox"></pre>
-  </section>
+
+  <main class="container">
+    <!-- بطاقة كشط البيانات -->
+    <div class="card">
+      <div class="section-title">
+        <h2>كشط بيانات السيو (Scrape)</h2>
+      </div>
+      <div class="row">
+        <input id="scrapeUrlInput" type="url" placeholder="https://example.com" dir="ltr">
+        <button id="scrapeBtn" class="primary">بدء الكشط</button>
+      </div>
+      <p id="scrapeMsg" class="msg"></p>
+      
+      <!-- حاوية النتائج -->
+      <div id="scrapeResults" style="display: none; margin-top: 20px;">
+        <div class="kv">
+          <div class="k">العنوان (Title)</div>
+          <div class="v" id="resTitle"></div>
+          
+          <div class="k">طول العنوان</div>
+          <div class="v" id="resTitleLength"></div>
+          
+          <div class="k">الوصف (Meta Desc)</div>
+          <div class="v" id="resDesc"></div>
+          
+          <div class="k">عنوان H1</div>
+          <div class="v" id="resH1"></div>
+          
+          <div class="k">حالة الاستجابة</div>
+          <div class="v" id="resStatus"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- بطاقة الفحص التقني -->
+    <div class="card">
+      <div class="section-title">
+        <h2>الفحص التقني (Audit)</h2>
+      </div>
+      <div class="row">
+        <input id="auditUrlInput" type="url" placeholder="https://example.com" dir="ltr">
+        <button id="auditBtn" class="primary">بدء الفحص</button>
+      </div>
+      <p id="auditMsg" class="msg"></p>
+      
+      <!-- حاوية نتائج الفحص -->
+      <div id="auditResults" style="display: none; margin-top: 20px;">
+        <!-- سيتم حقن النتائج هنا عبر الجافاسكريبت -->
+      </div>
+    </div>
+  </main>
+
   <script src="js/main.js"></script>
 </body>
 </html>
