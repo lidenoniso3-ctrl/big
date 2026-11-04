@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>تفعيل الترخيص</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="auth-box">
+    <h1>أدخل مفتاح الترخيص</h1>
+    <form id="licenseForm">
+      <input id="licenseKey" type="text" placeholder="XXXXXXXX-XXXXXXXX-..." required>
+      <button type="submit">تفعيل</button>
+    </form>
+    <p id="msg" class="msg"></p>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script>
+    document.getElementById("licenseForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const key = document.getElementById("licenseKey").value.trim();
+      const msg = document.getElementById("msg");
+      msg.textContent = "جارٍ التحقق...";
+      try {
+        await verifyLicense(key);
+        window.location.href = "dashboard.html";
+      } catch (err) {
+        msg.textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>
