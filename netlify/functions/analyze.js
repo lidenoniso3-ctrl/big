@@ -1,19 +1,14 @@
 const { requireValidLicense } = require("./_lib/license");
 const { isPublicUrl } = require("./_lib/scraper");
 const cheerio = require("cheerio");
+const { req } = require("curl-cffi");
 
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
-
-// قائمة ضخمة بكلمات التوقف (إنجليزية + عربية)
+// قائمة الكلمات المستثناة (Stop Words) الضخمة
 const STOP_WORDS = new Set([
-  // English stop words
   "the","and","a","an","to","of","in","on","at","by","for","with","about","against","between","into","through","during","before","after","above","below","from","up","down","out","off","over","under","again","further","then","once","here","there","when","where","why","how","all","any","both","each","few","more","most","other","some","such","no","nor","not","only","own","same","so","than","too","very","can","will","just","should","now","i","me","my","we","our","you","your","he","him","his","she","her","it","its","they","them","their","what","which","who","whom","this","that","these","those","am","is","are","was","were","be","been","being","have","has","had","do","does","did","doing","would","could","ought","might","must","shall","may","first","second","also","new","one","two","three","four","five","get","got","make","made","say","said","go","went","see","seen","know","knew","take","took","come","came","much","many","hrs","mins","sec","per","via","etc","vs","if","or","but","as","uk","us","still","even","well","back","yet","ever","never","always","often","sometimes","really","like","want","need","use","used","using","able","going","goes","gone","done","takes","taken","gives","gave","given","find","finds","found","think","thinks","thought","tell","tells","told","ask","asks","asked","work","works","worked","seem","seems","seemed","feel","feels","felt","try","tries","tried","leave","leaves","left","call","calls","called","good","great","best","better","old","big","small","high","low","long","short","day","days","week","weeks","year","years","time","times","people","person","man","men","woman","women","child","children","way","ways","thing","things","part","parts","life","world","hand","hands","eye","eyes","place","case","point","fact","group","number","company","system","program","question","government","right","left","already","almost","along","among","around","because","become","becomes","became","behind","being","besides","beyond","bring","brings","brought","build","builds","built","buy","buys","bought","cause","causes","continue","continues","continued","different","early","either","end","ends","ended","enough","every","example","examples","follow","follows","followed","form","forms","four","had","having","hers","herself","himself","however","itself","keep","keeps","kept","known","large","last","later","least","less","let","lets","likely","look","looks","looked","making","myself","needed","next","others","ours","ourselves","perhaps","possible","put","puts","quite","rather","saw","several","show","shows","showed","shown","side","since","someone","something","sure","theirs","themselves","things","though","three","thus","today","together","toward","upon","uses","usually","wanted","ways","whether","while","whole","whose","within","without","word","words","worked","would","yes",
-
-  // Arabic stop words
   "في","من","على","إلى","عن","مع","هذا","هذه","ذلك","تلك","التي","الذي","الذين","اللواتي","اللذان","اللتان","اللذين","اللتين","و","أو","ثم","لكن","بل","حتى","إذا","إن","أن","كان","كانت","يكون","تكون","هو","هي","هم","هن","أنا","أنت","نحن","قد","لقد","ما","لا","لم","لن","كل","بعض","غير","بين","عند","عندما","حيث","كيف","لماذا","متى","أين","أي","كما","لدى","أيضا","أيضاً","تم","يتم","وقد","وكان","وفي","ومن","وعلى","الآن","حول","خلال","بعد","قبل","تحت","فوق","أمام","خلف","جانب","ضد","نحو","دون","سوى","خاصة","خصوصا","مثلا","مثلاً","كذلك","إلا","ألا","لكي","كي","حين","حينما","بينما","طالما","كلما","بما","عما","فيما","مما","لكنما","إنما","كأن","كأنما","ليت","لعل","لولا","لو","لئن","إذ","إذما","إذاً","إذن","هنا","هناك","هنالك","ثمة","حيثما","أنى","أيان","كيفما","مهما","لمن","بمن","عمن","ممن","فيمن","منذ","وراء","بجانب","قرب","وسط","تجاه","إزاء","حيال","بشأن","بخصوص","قبلما","بعدما","لطالما"
 ]);
 
-// دالة استخراج الكلمات المفتاحية
 function extractKeywords(text) {
   const words = text
     .toLowerCase()
@@ -25,7 +20,6 @@ function extractKeywords(text) {
 
   const freq = {};
   words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
-
   const total = words.length || 1;
 
   return Object.entries(freq)
@@ -48,10 +42,40 @@ exports.handler = async (event) => {
   }
 
   try {
-    const res = await fetch(url, { headers: { "User-Agent": UA } });
-    const html = await res.text();
+    // جلب الصفحة باستخدام curl-cffi
+    const response = await req.get(url, {
+      impersonate: "chrome136",
+      timeout: 15000,
+      allowRedirects: true,
+      maxRedirects: 5,
+    });
+
+    const html = typeof response.data === "string" ? response.data : response.data.toString("utf-8");
     const $ = cheerio.load(html);
     const domain = new URL(url).origin;
+
+    // === كشف صفحات الحماية (Bot Detection) ===
+    const pageTitle = ($("title").first().text() || "").toLowerCase();
+    const pageBody = $("body").text().toLowerCase();
+    const size = html.length;
+
+    const blocked =
+      ["robot check", "captcha", "access denied", "just a moment",
+       "attention required", "checking your browser", "are you a robot",
+       "cloudflare", "please verify"].some(sig =>
+         pageTitle.includes(sig) || pageBody.includes(sig)
+       ) || size < 5000;
+
+    if (blocked) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          ok: false,
+          blocked: true,
+          error: "الموقع رفض الطلب (حماية ضد الروبوتات). جرب موقعاً آخر.",
+        }),
+      };
+    }
 
     // استخراج وسوم التواصل
     const ogTags = {};
@@ -64,10 +88,9 @@ exports.handler = async (event) => {
     const images = $("img");
     const imagesWithoutAlt = images.filter((_, el) => !$(el).attr("alt")).length;
 
-    // ✅ إزالة العناصر غير المفيدة قبل استخراج النص
+    // إزالة العناصر غير المفيدة قبل استخراج النص
     $("script, style, noscript, iframe, nav, footer, header, aside, form, button, select, textarea").remove();
 
-    // ✅ استخراج النص فقط من وسوم المحتوى الحقيقي
     let text = "";
     ["p","h1","h2","h3","h4","h5","h6","li","strong","b","td","blockquote","article","main"].forEach(tag => {
       $(tag).each((_, el) => {
@@ -78,12 +101,14 @@ exports.handler = async (event) => {
     const keywords = extractKeywords(text);
     const wordCount = text.split(/\s+/).filter(Boolean).length;
 
+    // فحص robots.txt و sitemap.xml باستخدام curl-cffi
     const checkFile = async (path) => {
       try {
-        const r = await fetch(domain + path, { method: "HEAD", headers: { "User-Agent": UA } });
+        const r = await req.head(domain + path, { impersonate: "chrome136", timeout: 5000 });
         return r.status;
       } catch { return 0; }
     };
+    
     const [robotsStatus, sitemapStatus] = await Promise.all([
       checkFile("/robots.txt"),
       checkFile("/sitemap.xml")
@@ -103,6 +128,6 @@ exports.handler = async (event) => {
       }),
     };
   } catch (err) {
-    return { statusCode: 502, body: JSON.stringify({ error: err.message }) };
+    return { statusCode: 502, body: JSON.stringify({ error: `فشل التحليل: ${err.message}` }) };
   }
 };
